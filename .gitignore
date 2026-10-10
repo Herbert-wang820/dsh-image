@@ -1,0 +1,11 @@
+# No trailing slash: node_modules here is a symlink to the local DSH install, and
+# a directory-only pattern would not match it.
+node_modules
+dist
+.dsh-auto-visual
+*.tgz
+
+# Local test scratch: the integration tests mkdtemp inside the package so a
+# crash cannot leave a fixture behind that a later commit would pick up.
+.settings-integration-*/
+.manifest-integration-*/

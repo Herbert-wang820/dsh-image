@@ -1,0 +1,59 @@
+{
+  "name": "dsh-auto-visual",
+  "version": "0.1.0",
+  "description": "Plans original images for documents, sites and slides, generates them with a mock or OpenAI-compatible provider, and records each asset's declared usage",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Herbert-wang820/dsh-image.git" },
+  "homepage": "https://github.com/Herbert-wang820/dsh-image#readme",
+  "bugs": { "url": "https://github.com/Herbert-wang820/dsh-image/issues" },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./core": "./dist/core.js",
+    "./client": "./dist/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "dist",
+    "cordis.patch.yml",
+    "README.md",
+    "docs/IMPLEMENTATION.md"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "image-generation",
+    "visual-assets",
+    "openai-images"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepare": "npm run build",
+    "test": "node --experimental-strip-types --test test/*.test.ts && node test/client-harness.mjs",
+    "check": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh": ">=0.1.0-rc.1 <0.2.0-0 || >=0.1.7-rc.1 <0.2.0-0",
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.1 <0.2.0-0 || >=0.1.7-rc.1 <0.2.0-0",
+    "@deepseek-ai/dsh-typert-protocol": ">=0.1.0-rc.1 <0.2.0-0 || >=0.1.7-rc.1 <0.2.0-0",
+    "@deepseek-ai/schemastery": "^3.18.0"
+  }
+}

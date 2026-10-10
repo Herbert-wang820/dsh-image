@@ -1,0 +1,6 @@
+url: https://github.com/Herbert-wang820/dsh-image
+name: Herbert-wang820/dsh-image
+category: vision
+description:
+  en: 'Plans original images for documents, sites and slides, generates them with a mock or OpenAI-compatible provider, and records each asset''s declared usage.'
+  zh: '为文档、网页与幻灯片规划原创图片，用 mock 或 OpenAI 兼容接口生成，并登记每个素材声明的使用位置。'

@@ -1,0 +1,10 @@
+- insert:
+    - id: auto-visual
+      name: dsh-auto-visual
+      config:
+        mode: suggest
+        provider: disabled
+        model: mock-v1
+        baseURL: https://api.openai.com/v1
+        apiKey: ''
+        maxAssets: 3

@@ -200,6 +200,9 @@ semver 规则。
    ```sh
    git remote add origin https://github.com/Herbert-wang820/dsh-image.git   # 已配置过可跳过
    git push -u origin main
+
+   # 该机器上 HTTPS 没有可用凭据，用的是已注册的 SSH key：
+   git remote set-url origin git@github.com:Herbert-wang820/dsh-image.git
    ```
 
 2. 给仓库加上 `dsh-plugin` topic（列表要求）。两种方式任选：

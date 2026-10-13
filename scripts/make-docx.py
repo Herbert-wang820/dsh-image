@@ -5,6 +5,10 @@ The auto-visual plugin generates and registers image assets; it deliberately doe
 not write Office files. This script performs that last step so the pipeline can be
 checked end to end. It writes OOXML directly (no python-docx dependency) and takes
 every fact from the command line, so no credential ever reaches the document.
+
+Never pass an API key, token or endpoint host through --meta/--note/--intro: this
+document is committed as a published example. `test/repo-hygiene.test.ts` scans
+the committed document and fails on a credential, a local path or an endpoint row.
 """
 from __future__ import annotations
 

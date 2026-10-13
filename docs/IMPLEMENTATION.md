@@ -1,4 +1,4 @@
-# 实施方案与边界（第一版）
+# 实现说明与边界
 
 ## 目标
 自动配图编排：语义判断 → 结构化素材计划 → 提示词整理 → 生成并持久化 → 主 Agent 回填 → 分级验证。默认禁用生成；可显式启用模拟供应商，或配置 OpenAI 兼容 Images API 与模型 ID。
@@ -50,20 +50,82 @@ DSH 的 Web 设置是客户端插件，不是一个独立服务。已核实的�
 
 ## 打包与提交（按 awesome-dsh-plugin 贡献指南）
 
-- `package.json` 的 `dsh.bundle.patch` 是可安装性的唯一来源；只声明 `dsh.client` 无法被
-  `dsh plugin add` 安装。`dsh.client.inject` 只列声明了 `dsh.client` 的客户端包；客户端库
-  （react、ui-primitives）由宿主打包器内联，官方包同样不列进 `inject`。
-- 官方 `@deepseek-ai/*` 一律用 `peerDependencies`；peer 范围必须带显式预发布分支，否则
-  node-semver 会静默排除 harness 的预发布版本。当前范围由 harness 自身的
-  `evaluatePluginCompatibility`（`includePrerelease: true`）与 npm 严格 semver 双向验证。
-- `license` 为 MIT 并附 `LICENSE`；`repository` 指向 GitHub 仓库。
-- 待提交条目：`docs/submission/data/plugins/Herbert-wang820__dsh-image.yml`（分类 `vision`），
-  提交前需把仓库推送到 GitHub、加 `dsh-plugin` topic、满足 1 天仓库年龄。
-- 校验测试：`test/package-manifest.test.ts`（真实 `loadProfileDirectory` + boot 走完
-  bundle → patch → 包解析 → 插件加载，并校验 `inject` 条目确为客户端包）、
-  `test/submission-entry.test.ts`（条目字段与格式）。
-- 截图：仓库未提供 `screenshots.json`。唯一界面是设置页，当前环境无法截图，因此不用非界面
-  图片冒充截图；商店页会回退到 README 中的真实生成示例图。
+安装契约由 `package.json` 的 `dsh` 字段决定，并由 `test/package-manifest.test.ts` 用真实
+`loadProfileDirectory` + boot 流程校验（不是只解析 JSON）：
+
+```jsonc
+"dsh": {
+  "bundle": { "patch": "./cordis.patch.yml" },   // 必需：只声明 dsh.client 无法安装
+  "client": { "platform": "web", "inject": [ … ] }
+}
+```
+
+- 只有声明 `dsh.bundle` 才能被 `dsh plugin add` 安装；只声明 `dsh.client` 是最常见的被拒原因。
+- `cordis.patch.yml` 的插入行 `name` 必须等于包名（`dsh-auto-visual`），`id` 必须等于插件条目 id
+  （`auto-visual`），与设置页注册的 id 一致。
+- `dsh.client.inject` 只列**声明了 `dsh.client` 的客户端包**，做的是浏览器模块图排序：缺一个会让
+  插件等它而停等，多列一个非客户端包则没有对应图行。`dist/client.js` 里的 `require("react")` 与
+  `require("@deepseek-ai/dsh-client-ui-primitives")` 由宿主打包器内联，官方客户端包同样**不**把它们
+  写进 `inject`。测试会校验每个 `inject` 条目确实声明了 `dsh.client`。
+- 官方 `@deepseek-ai/*` 一律声明为 `peerDependencies`，不打包进依赖。
+
+**peer 范围必须带显式预发布分支。** node-semver 只在该范围里存在「同一个 major.minor.patch 元组
+且自身带预发布标签」的比较符时，才放行预发布版本：
+
+```jsonc
+"@deepseek-ai/dsh": ">=0.1.0-rc.1 <0.2.0-0 || >=0.1.7-rc.1 <0.2.0-0"
+```
+
+第一个分支覆盖 `0.1.0-rc.*` 与所有 `0.1.x` 正式版，第二个分支覆盖当前 harness 所在的
+`0.1.7-rc.*`。**harness 在新的 patch 元组上发布预发布版时，需要按同样形式追加一个分支**，否则
+用户的 peer 解析会失败。该范围已双向验证：通过 harness 自身的兼容性门（`dsh-app-boot` 的
+`evaluatePluginCompatibility`，`includePrerelease: true`），同时对当前运行版本满足 npm 的严格
+semver 规则。
+
+`license` 为 MIT 并附 `LICENSE`；`repository` 指向 GitHub 仓库；`files` 只收 `dist`、
+`cordis.patch.yml`、`README.md` 与本文档，测试产物不进包。
+
+### 投稿流程（待执行）
+
+待提交条目已写好并本地校验：`docs/submission/data/plugins/Herbert-wang820__dsh-image.yml`
+（分类 `vision`）。`test/submission-entry.test.ts` 检查文件名、`url`/`name` 一致性、分类取值、
+描述格式（英文以句号结尾、单行、无营销词）以及列表拒绝的字段。
+
+提交前需要在 GitHub 侧完成：
+
+```sh
+# 1. 推送（远端默认分支是 main；该机器 HTTPS 无凭据，用已注册的 SSH key）
+git push -u origin main
+
+# 2. 加 dsh-plugin topic（列表要求，需仓库写权限）
+gh repo edit Herbert-wang820/dsh-image --add-topic dsh-plugin
+# 或：curl -X PUT -H "Authorization: Bearer $GITHUB_TOKEN" \
+#      -H "Accept: application/vnd.github+json" \
+#      https://api.github.com/repos/Herbert-wang820/dsh-image/topics -d '{"names":["dsh-plugin"]}'
+```
+
+网页路径：仓库首页右栏 **About** 齿轮 → **Topics**。此外仓库需存在满 1 天（CI 自动检查）。
+可选：发布 npm 包或在 GitHub Release 附 `.tgz`，安装时可跳过源码构建授权。
+
+然后到 awesome-dsh-plugin 开 PR，**只新增一个文件**（不要手工编辑生成出来的 README，一个 PR
+最多 3 条，且不要改动别人的条目）：
+
+```sh
+cp docs/submission/data/plugins/Herbert-wang820__dsh-image.yml \
+   <awesome-dsh-plugin>/data/plugins/Herbert-wang820__dsh-image.yml
+```
+
+截图（可选）：列表商店页会从 README 抽取图片作为回退，README 中已放一张真实生成示例图。仓库当前
+**没有** `screenshots.json`：本插件唯一的界面是设置页，实现环境无法截图，因此不拿非界面图片冒充
+截图。
+
+## 开发环境说明
+
+- 本仓库的 `node_modules` 是指向本机已安装 DSH 依赖的符号链接（`.gitignore` 已忽略且不随包交付），
+  因此这台机器上无需 `npm install` 即可跑测试；普通克隆需要正常安装 peer 依赖。
+- `dist/` 不入库，由 `prepare` 或 `npm run build` 生成；`npm install` 会触发 `prepare` 自动构建。
+- profile 目录只读时，`dsh plugin`、`--dump-config*` 等命令会因取锁失败而报 EROFS，此时不做任何
+  修改，也不会绕过或提权重试。
 
 ## 完成定义
 1. 开发初版：构建、模拟单元/集成测试、注册 smoke test、client 半契约测试通过。
